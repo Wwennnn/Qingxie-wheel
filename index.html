@@ -1218,13 +1218,13 @@ document.getElementById('photosContainer').addEventListener('touchend', () => {
   }, 1000);
 });
 
-// 页面加载后开始计时
-window.addEventListener('load', () => {
+// 页面DOM加载完就开始计时，不用等图片
+window.addEventListener('DOMContentLoaded', () => {
   startMomentTimer();
 });
 
-// 如果已经加载完了，直接开始
-if (document.readyState === 'complete') {
+// 如果DOM已经解析完了，直接开始
+if (document.readyState === 'interactive' || document.readyState === 'complete') {
   startMomentTimer();
 }
 </script>
