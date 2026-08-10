@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>机电青协 · 部门盲盒</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:linear-gradient(180deg,#FFF5EB 0%,#FFE8D6 100%);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:20px 16px 40px;
+}
+.header{text-align:center;margin-bottom:24px}
+.header .logo{
+  display:inline-flex;align-items:center;gap:8px;
+  background:#fff;border-radius:20px;padding:6px 16px;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:16px;
+  font-size:14px;color:#666;
+}
+.header .logo .heart{color:#FF6B6B}
+.header h1{font-size:28px;color:#333;margin-bottom:8px;font-weight:700}
+.header p{font-size:15px;color:#888}
+
+.wheel-container{
+  position:relative;
+  width:min(340px,90vw);
+  height:min(340px,90vw);
+  margin:10px 0 30px;
+}
+.pointer{
+  position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+  z-index:10;
+  width:0;height:0;
+  border-left:16px solid transparent;
+  border-right:16px solid transparent;
+  border-top:30px solid #FF4757;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.2));
+}
+.pointer::after{
+  content:'';position:absolute;top:-36px;left:50%;transform:translateX(-50%);
+  width:16px;height:16px;border-radius:50%;background:#FF4757;
+  border:3px solid #fff;
+}
+#wheel{
+  width:100%;height:100%;
+  border-radius:50%;
+  transition:transform 4.5s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+  box-shadow:0 8px 30px rgba(0,0,0,.12), inset 0 0 0 6px #fff;
+}
+.center-btn{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:70px;height:70px;border-radius:50%;
+  background:linear-gradient(135deg,#FF8C42,#FF6B35);
+  color:#fff;border:none;font-size:18px;font-weight:700;
+  box-shadow:0 4px 15px rgba(255,107,53,.4), inset 0 0 0 4px #fff;
+  cursor:pointer;z-index:5;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .15s;
+}
+.center-btn:active{transform:translate(-50%,-50%) scale(.95)}
+.center-btn:disabled{opacity:.7;cursor:not-allowed}
+
+.tip{
+  text-align:center;color:#999;font-size:13px;margin-top:-10px;margin-bottom:20px;
+}
+
+/* 弹窗 */
+.modal-overlay{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,.5);
+  display:none;align-items:center;justify-content:center;
+  z-index:100;padding:20px;
+  animation:fadeIn .3s ease;
+}
+.modal-overlay.show{display:flex}
+.modal{
+  background:#fff;border-radius:20px;
+  width:100%;max-width:360px;
+  max-height:85vh;overflow-y:auto;
+  animation:slideUp .4s cubic-bezier(.16,1,.3,1);
+  position:relative;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+
+.modal-header{
+  padding:28px 24px 20px;
+  text-align:center;
+  border-radius:20px 20px 0 0;
+  color:#fff;
+  position:relative;
+}
+.modal-header .dept-icon{
+  font-size:40px;margin-bottom:8px;
+}
+.modal-header h2{font-size:22px;font-weight:700;margin-bottom:6px}
+.modal-header .dept-desc{font-size:14px;opacity:.9;line-height:1.5}
+
+.modal-body{padding:20px 24px}
+.modal-body .question{
+  text-align:center;font-size:16px;color:#333;
+  margin-bottom:16px;font-weight:600;
+}
+
+.detail-tabs{
+  display:flex;gap:8px;margin-bottom:16px;
+}
+.tab-btn{
+  flex:1;padding:10px 4px;
+  border:2px solid #f0f0f0;border-radius:12px;
+  background:#fff;font-size:12px;color:#666;
+  cursor:pointer;transition:all .2s;
+  font-weight:500;
+}
+.tab-btn.active{
+  border-color:var(--dept-color,#FF6B35);
+  color:var(--dept-color,#FF6B35);
+  background:var(--dept-bg,#FFF5EB);
+}
+.tab-content{
+  background:#f8f9fa;border-radius:12px;
+  padding:16px;font-size:14px;line-height:1.8;
+  color:#444;min-height:100px;
+  animation:fadeIn .25s ease;
+}
+.tab-content ul{padding-left:18px;margin:0}
+.tab-content li{margin-bottom:6px}
+.tab-content li:last-child{margin-bottom:0}
+
+.modal-actions{
+  padding:0 24px 24px;
+  display:flex;gap:12px;
+}
+.btn{
+  flex:1;padding:14px;border-radius:12px;
+  border:none;font-size:15px;font-weight:600;
+  cursor:pointer;transition:all .2s;
+}
+.btn-primary{
+  background:var(--dept-color,#FF6B35);
+  color:#fff;
+  box-shadow:0 4px 12px rgba(255,107,53,.3);
+}
+.btn-secondary{
+  background:#f5f5f5;color:#666;
+}
+.btn:active{transform:scale(.97)}
+
+.back-btn{
+  display:block;width:100%;padding:12px;
+  border:none;background:transparent;
+  color:#999;font-size:13px;cursor:pointer;
+  margin-top:8px;
+}
+
+/* 滚动条美化 */
+.modal::-webkit-scrollbar{width:4px}
+.modal::-webkit-scrollbar-thumb{background:#ddd;border-radius:2px}
+
+/* 介绍页 */
+.intro-page{
+  width:100%;max-width:400px;
+  animation:fadeIn .6s ease;
+}
+.intro-page.hide{
+  display:none;
+}
+.intro-hero{
+  text-align:center;
+  padding:30px 20px 20px;
+}
+.intro-hero .badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:#fff;border-radius:20px;padding:8px 20px;
+  box-shadow:0 2px 12px rgba(0,0,0,.06);margin-bottom:20px;
+  font-size:14px;color:#666;
+}
+.intro-hero .badge .heart{color:#FF6B6B;font-size:16px}
+.intro-hero h1{
+  font-size:36px;color:#333;margin-bottom:10px;font-weight:800;
+  background:linear-gradient(135deg,#FF6B35,#FF8C42);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.intro-hero .subtitle{
+  font-size:16px;color:#888;margin-bottom:8px;
+}
+.intro-hero .slogan{
+  font-size:14px;color:#FF8C42;font-weight:600;
+  background:#FFF5EB;padding:6px 16px;border-radius:12px;
+  display:inline-block;margin-top:8px;
+}
+.intro-desc{
+  background:#fff;border-radius:16px;padding:20px;
+  margin:16px 0;
+  box-shadow:0 2px 12px rgba(0,0,0,.04);
+  font-size:14px;line-height:1.8;color:#555;
+  text-indent:2em;
+}
+.stats-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  margin:16px 0;
+}
+.stat-card{
+  background:#fff;border-radius:16px;padding:16px 12px;
+  text-align:center;
+  box-shadow:0 2px 12px rgba(0,0,0,.04);
+}
+.stat-card .num{
+  font-size:24px;font-weight:800;
+  background:linear-gradient(135deg,#FF6B35,#FF8C42);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  margin-bottom:4px;
+}
+.stat-card .label{
+  font-size:12px;color:#888;
+}
+.features{
+  background:#fff;border-radius:16px;padding:20px;
+  margin:16px 0;
+  box-shadow:0 2px 12px rgba(0,0,0,.04);
+}
+.features h3{
+  font-size:16px;color:#333;margin-bottom:14px;
+  display:flex;align-items:center;gap:8px;
+}
+.features h3::before{
+  content:'';width:4px;height:16px;
+  background:linear-gradient(180deg,#FF6B35,#FF8C42);
+  border-radius:2px;
+}
+.feature-list{
+  display:flex;flex-wrap:wrap;gap:8px;
+}
+.feature-tag{
+  background:#FFF5EB;color:#FF8C42;
+  padding:6px 14px;border-radius:20px;
+  font-size:13px;font-weight:500;
+}
+.start-btn{
+  width:100%;padding:16px;border-radius:16px;
+  border:none;font-size:17px;font-weight:700;
+  cursor:pointer;transition:all .2s;
+  background:linear-gradient(135deg,#FF8C42,#FF6B35);
+  color:#fff;
+  box-shadow:0 6px 20px rgba(255,107,53,.35);
+  margin-top:20px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.start-btn:active{transform:scale(.97)}
+.start-btn .arrow{
+  display:inline-block;transition:transform .2s;
+}
+.start-btn:hover .arrow{
+  transform:translateX(4px);
+}
+
+/* 转盘页面 */
+.wheel-page{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  animation:fadeIn .5s ease;
+}
+.wheel-page.hide{
+  display:none;
+}
+
+/* 精彩瞬间浮动按钮 */
+.moment-popup{
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%) scale(0.5);
+  background:linear-gradient(135deg,#FF8C42,#FF6B35);
+  color:#fff;
+  padding:18px 32px;
+  border-radius:50px;
+  font-size:16px;
+  font-weight:700;
+  box-shadow:0 8px 30px rgba(255,107,53,.5);
+  cursor:pointer;
+  z-index:50;
+  opacity:0;
+  visibility:hidden;
+  transition:all .5s cubic-bezier(.16,1,.3,1);
+  display:flex;
+  align-items:center;
+  gap:10px;
+  border:none;
+}
+.moment-popup.show{
+  transform:translate(-50%,-50%) scale(1);
+  opacity:1;
+  visibility:visible;
+  animation:pulse 2s ease-in-out infinite;
+}
+.moment-popup:active{
+  transform:translate(-50%,-50%) scale(.95);
+}
+.moment-popup .sparkle{
+  font-size:20px;
+  animation:sparkle 1.5s ease-in-out infinite;
+}
+
+/* 按钮呼吸动画 */
+@keyframes pulse{
+  0%,100%{
+    box-shadow:0 8px 30px rgba(255,107,53,.5);
+  }
+  50%{
+    box-shadow:0 8px 40px rgba(255,107,53,.7), 0 0 0 10px rgba(255,107,53,.15);
+  }
+}
+
+/* 星星闪烁动画 */
+@keyframes sparkle{
+  0%,100%{
+    transform:scale(1) rotate(0deg);
+    opacity:1;
+  }
+  50%{
+    transform:scale(1.3) rotate(15deg);
+    opacity:.8;
+  }
+}
+
+/* 按钮背景光晕 */
+.moment-popup::before{
+  content:'';
+  position:absolute;
+  top:-6px;left:-6px;right:-6px;bottom:-6px;
+  background:linear-gradient(135deg,#FFB347,#FF6B35,#FF8C42);
+  border-radius:56px;
+  z-index:-1;
+  opacity:0;
+  filter:blur(10px);
+  transition:opacity .3s;
+}
+.moment-popup.show::before{
+  opacity:.6;
+  animation:glow 2s ease-in-out infinite;
+}
+@keyframes glow{
+  0%,100%{opacity:.4;transform:scale(1);}
+  50%{opacity:.7;transform:scale(1.08);}
+}
+
+/* 看过之后移到左上角 - 静态，不抢风头 */
+.moment-popup.bottom-left{
+  top:20px;
+  left:20px;
+  bottom:auto;
+  right:auto;
+  transform:translate(-50%,-100px) scale(0.8);
+  padding:10px 16px;
+  font-size:12px;
+  opacity:0.8;
+}
+.moment-popup.bottom-left.show{
+  transform:translate(0,0) scale(0.8);
+  animation:none;
+}
+.moment-popup.bottom-left::before{
+  display:none;
+}
+.moment-popup.bottom-left .sparkle{
+  display:none;
+}
+
+/* 底部按钮超炫酷组合动画 */
+.start-btn.pulse-animation{
+  position:relative;
+  overflow:hidden;
+  animation:btnSuperPulse 1.5s ease-in-out infinite;
+  background:linear-gradient(90deg, #FF8C42, #FF6B35, #FF8C42);
+  background-size:200% 100%;
+  animation:btnSuperPulse 1.5s ease-in-out infinite, btnGradient 3s ease-in-out infinite;
+}
+
+/* 主脉冲呼吸 */
+@keyframes btnSuperPulse{
+  0%,100%{
+    transform:scale(1);
+    box-shadow:0 6px 20px rgba(255,107,53,.4), 0 0 0 0 rgba(255,107,53,.4);
+  }
+  50%{
+    transform:scale(1.05);
+    box-shadow:0 8px 30px rgba(255,107,53,.6), 0 0 0 12px rgba(255,107,53,0);
+  }
+}
+
+/* 渐变流动 */
+@keyframes btnGradient{
+  0%{
+    background-position:0% 50%;
+  }
+  50%{
+    background-position:100% 50%;
+  }
+  100%{
+    background-position:0% 50%;
+  }
+}
+
+/* 扫光效果 */
+.start-btn.pulse-animation::after{
+  content:'';
+  position:absolute;
+  top:0;
+  left:-100%;
+  width:100%;
+  height:100%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent);
+  animation:btnShine 2.5s ease-in-out infinite;
+}
+@keyframes btnShine{
+  0%{
+    left:-100%;
+  }
+  20%{
+    left:100%;
+  }
+  100%{
+    left:100%;
+  }
+}
+
+/* 波纹扩散 */
+.start-btn.pulse-animation::before{
+  content:'';
+  position:absolute;
+  top:50%;
+  left:50%;
+  width:100%;
+  height:100%;
+  border-radius:50px;
+  border:2px solid rgba(255,107,53,.5);
+  transform:translate(-50%,-50%) scale(1);
+  animation:btnRipple 2s ease-out infinite;
+}
+@keyframes btnRipple{
+  0%{
+    transform:translate(-50%,-50%) scale(1);
+    opacity:0.6;
+  }
+  100%{
+    transform:translate(-50%,-50%) scale(1.3);
+    opacity:0;
+  }
+}
+
+/* 照片展示页面 */
+.photos-page{
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  background:linear-gradient(180deg,#FFF5EB 0%,#FFE8D6 100%);
+  z-index:200;
+  display:flex;
+  flex-direction:column;
+  animation:fadeIn .4s ease;
+}
+.photos-page.hide{
+  display:none;
+}
+.photos-header{
+  padding:20px 16px;
+  text-align:center;
+  background:#fff;
+  box-shadow:0 2px 12px rgba(0,0,0,.06);
+  position:relative;
+  flex-shrink:0;
+}
+.photos-header h2{
+  font-size:20px;
+  color:#333;
+  font-weight:700;
+}
+.photos-header p{
+  font-size:13px;
+  color:#999;
+  margin-top:4px;
+}
+.photos-back{
+  position:absolute;
+  left:16px;
+  top:50%;
+  transform:translateY(-50%);
+  background:#f5f5f5;
+  border:none;
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  font-size:18px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#666;
+}
+.photos-back:active{
+  background:#eee;
+}
+.photos-container{
+  flex:1;
+  overflow-y:auto;
+  padding:16px;
+  -webkit-overflow-scrolling:touch;
+}
+.photos-grid{
+  columns:2;
+  column-gap:12px;
+}
+.photo-item{
+  break-inside:avoid;
+  margin-bottom:12px;
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+  background:#fff;
+}
+.photo-item img{
+  width:100%;
+  display:block;
+}
+.photo-item .caption{
+  padding:8px 10px;
+  font-size:12px;
+  color:#666;
+  text-align:center;
+}
+
+/* 照片页底部返回按钮 */
+.photos-footer{
+  padding:16px;
+  background:#fff;
+  box-shadow:0 -2px 12px rgba(0,0,0,.06);
+  flex-shrink:0;
+}
+.photos-footer .back-btn-full{
+  width:100%;
+  padding:14px;
+  border-radius:12px;
+  border:none;
+  background:linear-gradient(135deg,#FF8C42,#FF6B35);
+  color:#fff;
+  font-size:15px;
+  font-weight:600;
+  cursor:pointer;
+  box-shadow:0 4px 12px rgba(255,107,53,.3);
+}
+.photos-footer .back-btn-full:active{
+  transform:scale(.97);
+}
+
+/* 滚动进度条 */
+.scroll-progress{
+  height:3px;
+  background:#f0f0f0;
+  flex-shrink:0;
+}
+.scroll-progress-bar{
+  height:100%;
+  background:linear-gradient(90deg,#FF8C42,#FF6B35);
+  width:0%;
+  transition:width .1s linear;
+}
+</style>
+</head>
+<body>
+<!-- 介绍页 -->
+<div class="intro-page" id="introPage">
+  <div class="intro-hero">
+    <div class="badge"><span class="heart">❤</span> 机电工程学院青年志愿者协会</div>
+    <h1>机电青协</h1>
+    <p class="subtitle">奉献 · 友爱 · 互助 · 进步</p>
+    <span class="slogan">✨ 用志愿温暖校园</span>
+  </div>
+  
+  <div class="intro-desc">
+    机电工程学院青年志愿者协会是由志愿从事社会公益与社会保障事业的青年学生组成的群众性组织。我们秉承志愿精神，组织开展各类志愿服务活动，引导广大青年在实践中成长成才。
+  </div>
+  
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="num">2000+</div>
+      <div class="label">注册志愿者</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">50885h</div>
+      <div class="label">总志愿时长</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">500+</div>
+      <div class="label">活动场次</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">14万+</div>
+      <div class="label">宣传阅览量</div>
+    </div>
+  </div>
+  
+  <div class="features">
+    <h3>特色活动</h3>
+    <div class="feature-list">
+      <span class="feature-tag">🎨 香包融情</span>
+      <span class="feature-tag">🍚 光盘行动</span>
+      <span class="feature-tag">🎆 铁树银花</span>
+      <span class="feature-tag">📚 沛县支教</span>
+      <span class="feature-tag">♻️ 大轮胎环保</span>
+      <span class="feature-tag">🎵 音乐厅志愿</span>
+    </div>
+  </div>
+  
+  <button class="start-btn" id="startBtn">
+    抽取你的专属部门 <span class="arrow">→</span>
+  </button>
+</div>
+
+<!-- 转盘页 -->
+<div class="wheel-page hide" id="wheelPage">
+<div class="header">
+  <div class="logo"><span class="heart">❤</span> 机电工程学院青年志愿者协会</div>
+  <h1>🎡 部门盲盒</h1>
+  <p>转动转盘，遇见你的志愿部门</p>
+</div>
+
+<div class="wheel-container">
+  <div class="pointer"></div>
+  <canvas id="wheel"></canvas>
+  <button class="center-btn" id="spinBtn">开始</button>
+</div>
+
+<p class="tip">点击中心按钮转动转盘</p>
+</div>
+
+<!-- 精彩瞬间浮动按钮 -->
+<button class="moment-popup" id="momentBtn">
+  <span class="sparkle">✨</span>
+  <span>来看看属于我们的精彩瞬间！</span>
+</button>
+
+<!-- 照片展示页面 -->
+  <div class="photos-page hide" id="photosPage" style="display:none">
+    <div class="photos-header">
+      <button class="photos-back" id="photosBack">←</button>
+      <h2>📸 精彩瞬间</h2>
+      <p>记录每一个温暖的志愿时刻</p>
+    </div>
+    <div class="scroll-bar">
+      <div class="scroll-progress" id="scrollBar"></div>
+    </div>
+    <div class="photos-container" id="photosContainer">
+      <div class="photos-grid" id="photosGrid">
+      <div class="photo-item">
+        <img src="1.jpg" alt="🎈 气球义卖">
+        <div class="caption">🎈 气球义卖</div>
+      </div>
+      <div class="photo-item">
+        <img src="2.jpg" alt="🌸 干花书签">
+        <div class="caption">🌸 干花书签</div>
+      </div>
+      <div class="photo-item">
+        <img src="3.jpg" alt="🧵 香包融情">
+        <div class="caption">🧵 香包融情</div>
+      </div>
+      <div class="photo-item">
+        <img src="4.jpg" alt="🎆 元旦铁树银花">
+        <div class="caption">🎆 元旦铁树银花</div>
+      </div>
+      <div class="photo-item">
+        <img src="5.jpg" alt="🎵 徐州音乐厅">
+        <div class="caption">🎵 徐州音乐厅</div>
+      </div>
+      <div class="photo-item">
+        <img src="6.jpg" alt="🧹 下淀社区清理">
+        <div class="caption">🧹 下淀社区清理</div>
+      </div>
+      <div class="photo-item">
+        <img src="7.jpg" alt="🍚 光盘行动">
+        <div class="caption">🍚 光盘行动</div>
+      </div>
+      <div class="photo-item">
+        <img src="8.jpg" alt="💝 启聪孤儿院">
+        <div class="caption">💝 启聪孤儿院</div>
+      </div>
+      <div class="photo-item">
+        <img src="9.jpg" alt="🎨 活动海报">
+        <div class="caption">🎨 活动海报</div>
+      </div>
+      <div class="photo-item">
+        <img src="10.jpg" alt="📸 团建定格时刻">
+        <div class="caption">📸 团建定格时刻</div>
+      </div>
+      <div class="photo-item">
+        <img src="11.jpg" alt="🎄 圣诞蛋糕">
+        <div class="caption">🎄 圣诞蛋糕</div>
+      </div>
+      <div class="photo-item">
+        <img src="12.jpg" alt="💬 例会轻松氛围">
+        <div class="caption">💬 例会轻松氛围</div>
+      </div>
+      <div class="photo-item">
+        <img src="13.jpg" alt="🏆 荣誉时刻">
+        <div class="caption">🏆 荣誉时刻</div>
+      </div>
+      <div class="photo-item">
+        <img src="14.jpg" alt="📚 麦楼社区支教">
+        <div class="caption">📚 麦楼社区支教</div>
+      </div>
+      <div class="photo-item">
+        <img src="15.jpg" alt="🚀 社会实践活动">
+        <div class="caption">🚀 社会实践活动</div>
+      </div>
+      <div class="photo-item">
+        <img src="16.jpg" alt="💌 孝老爱亲明信片">
+        <div class="caption">💌 孝老爱亲明信片</div>
+      </div>
+      <div class="photo-item">
+        <img src="17.jpg" alt="👨‍🏫 支教小课堂">
+        <div class="caption">👨‍🏫 支教小课堂</div>
+      </div>
+    </div>
+    </div>
+    <div class="photos-footer">
+      <button class="back-btn-full" id="photosBackBtn">返回首页</button>
+    </div>
+  </div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header" id="modalHeader">
+      <div class="dept-icon" id="deptIcon">🎁</div>
+      <h2 id="deptName">部门名称</h2>
+      <div class="dept-desc" id="deptDesc">部门简介</div>
+    </div>
+    <div class="modal-body">
+      <div class="question" id="questionText">你想加入我们吗？</div>
+      
+      <div class="detail-tabs" id="detailTabs" style="display:none">
+        <button class="tab-btn" data-tab="do">我们做什么</button>
+        <button class="tab-btn" data-tab="gain">你能收获什么</button>
+        <button class="tab-btn" data-tab="need">我们需要什么</button>
+      </div>
+      <div class="tab-content" id="tabContent" style="display:none"></div>
+    </div>
+    <div class="modal-actions" id="mainActions">
+      <button class="btn btn-secondary" id="noBtn">再转一次</button>
+      <button class="btn btn-primary" id="yesBtn">想了解更多</button>
+    </div>
+    <div style="padding:0 24px 16px">
+      <button class="back-btn" id="backBtn" style="display:none">← 返回转盘</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// 部门数据
+const departments = [
+  {
+    name: "青联部",
+    icon: "📋",
+    color: "#FF6B6B",
+    bgColor: "#FFF0F0",
+    desc: "志愿活动策划与举办的\"总设计师\"",
+    do: [
+      "负责校级活动的策划、组织与举办（写策划案，与协办学院及时沟通）",
+      "跨学院志愿活动的协办",
+      "各个部门间的联络沟通",
+      "活动前期的宣传（公众号、食宣）",
+      "活动实时跟进并与志愿者保持沟通"
+    ],
+    gain: [
+      "活动策划能力",
+      "统筹管理能力",
+      "参加更多校级、院级志愿活动的机会",
+      "认识志同道合的伙伴"
+    ],
+    need: [
+      "对志愿活动有热情、有想法、脑洞大的小伙伴",
+      "零基础也可以，手把手教"
+    ]
+  },
+  {
+    name: "青务部",
+    icon: "📁",
+    color: "#4ECDC4",
+    bgColor: "#E8FAF8",
+    desc: "青协的\"幕后管家\"，文件与公务处理专家",
+    do: [
+      "对接青协各类文件、规范格式",
+      "整理周报、月报、简报",
+      "工作时间地点自由，不需要去活动现场（想去也可以）"
+    ],
+    gain: [
+      "办公软件技能",
+      "赢在起跑线的职场经验",
+      "居家办公式轻松体验",
+      "认识志同道合的伙伴"
+    ],
+    need: [
+      "做事细心、对青协感兴趣",
+      "喜欢安静处理事务的小伙伴（i人友好）"
+    ]
+  },
+  {
+    name: "青翼部",
+    icon: "🕊️",
+    color: "#A29BFE",
+    bgColor: "#F3F0FF",
+    desc: "班级团支部志愿活动的\"组织者\"，时长整理与审核的\"把关人\"",
+    do: [
+      "轮值负责大一至大三各班级志愿活动组织",
+      "大轮胎环保行动（青翼独家特色）",
+      "与各班级团支书合作定制多彩活动",
+      "志愿时长收集、审核、认定与申诉处理"
+    ],
+    gain: [
+      "组织管理经验",
+      "领导力提升",
+      "更多参与志愿活动的机会",
+      "数据处理能力"
+    ],
+    need: [
+      "有责任心、做事认真",
+      "对班级志愿感兴趣的同学"
+    ]
+  },
+  {
+    name: "青行部",
+    icon: "🚀",
+    color: "#FD79A8",
+    bgColor: "#FFF0F6",
+    desc: "校外志愿的\"先锋队\"，社会实践的\"行动派\"",
+    do: [
+      "策划和组织社会调研",
+      "开展各类公益服务活动",
+      "对接徐州音乐厅、永康社区、康汇敬老院、启聪孤儿院、彭祖园等校外实践基地",
+      "实施社会实践项目"
+    ],
+    gain: [
+      "丰富的校外实践经历",
+      "社会责任感",
+      "一边看演出一边完成志愿活动",
+      "人际交往能力"
+    ],
+    need: [
+      "热爱校外实践、有公益热情",
+      "愿意走出校园的同学"
+    ]
+  },
+  {
+    name: "青宣部",
+    icon: "🎨",
+    color: "#FDCB6E",
+    bgColor: "#FFF8E7",
+    desc: "青协的\"门面担当\"，用创意记录温暖瞬间",
+    do: [
+      "青协整体形象设计与宣传工作",
+      "活动前期海报制作",
+      "扫楼宣传、食宣",
+      "活动现场摄影记录",
+      "活动后勤支持",
+      "院级志愿活动的举办",
+      "活动后期的新闻撰写"
+    ],
+    gain: [
+      "设计软件技能",
+      "摄影修图能力",
+      "新媒体运营经验",
+      "超多小礼品和零食团建"
+    ],
+    need: [
+      "对宣传设计感兴趣、有丰富活动想法创意",
+      "想体验丰富大学生活的同学",
+      "零基础包教包会"
+    ]
+  }
+];
+
+const canvas = document.getElementById('wheel');
+const ctx = canvas.getContext('2d');
+const spinBtn = document.getElementById('spinBtn');
+const modal = document.getElementById('modal');
+const modalHeader = document.getElementById('modalHeader');
+const deptIcon = document.getElementById('deptIcon');
+const deptName = document.getElementById('deptName');
+const deptDesc = document.getElementById('deptDesc');
+const yesBtn = document.getElementById('yesBtn');
+const noBtn = document.getElementById('noBtn');
+const backBtn = document.getElementById('backBtn');
+const detailTabs = document.getElementById('detailTabs');
+const tabContent = document.getElementById('tabContent');
+const questionText = document.getElementById('questionText');
+const mainActions = document.getElementById('mainActions');
+
+const size = Math.min(340, window.innerWidth * 0.9);
+canvas.width = size * 2;
+canvas.height = size * 2;
+canvas.style.width = size + 'px';
+canvas.style.height = size + 'px';
+ctx.scale(2, 2);
+
+const R = size / 2;
+const segAngle = 360 / departments.length;
+let currentAngle = 0;
+let isSpinning = false;
+let currentDept = null;
+
+// 绘制转盘
+function drawWheel() {
+  ctx.clearRect(0, 0, size, size);
+  const cx = R, cy = R;
+  
+  departments.forEach((dept, i) => {
+    const startAngle = (i * segAngle - 90 - segAngle / 2) * Math.PI / 180;
+    const endAngle = ((i + 1) * segAngle - 90 - segAngle / 2) * Math.PI / 180;
+    
+    // 扇区
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, R - 3, startAngle, endAngle);
+    ctx.closePath();
+    ctx.fillStyle = dept.color;
+    ctx.fill();
+    
+    // 分隔线
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, R - 3, startAngle, startAngle);
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    
+    // 文字 - 竖排，白色粗体，从圆心向圆周排列
+    // 统一方向：所有扇区文字都从圆心向圆周竖排，每个字正立
+    // 这样当扇区转到顶部时，文字自然就是从上到下正立可读的
+    ctx.save();
+    ctx.translate(cx, cy);
+    
+    // 计算文字旋转角度
+    const textAngle = i * segAngle;
+    ctx.rotate(textAngle * Math.PI / 180);
+    
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 24px -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    // 文字阴影增加可读性
+    ctx.shadowColor = 'rgba(0,0,0,0.35)';
+    ctx.shadowBlur = 5;
+    ctx.shadowOffsetX = 1;
+    ctx.shadowOffsetY = 1;
+    
+    const chars = dept.name.split('');
+    const charSpacing = 32;
+    const startY = -R * 0.5; // 从靠近圆心约一半位置开始
+    
+    chars.forEach((char, ci) => {
+      const y = startY + ci * charSpacing;
+      ctx.fillText(char, 0, y);
+    });
+    
+    ctx.restore();
+  });
+  
+  // 中心圆装饰
+  ctx.beginPath();
+  ctx.arc(cx, cy, 40, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+}
+
+drawWheel();
+
+// 旋转转盘
+function spin() {
+  if (isSpinning) return;
+  isSpinning = true;
+  spinBtn.disabled = true;
+  
+  // 随机选中一个部门（均等概率）
+  const targetIndex = Math.floor(Math.random() * departments.length);
+  
+  // 计算旋转角度：转5-7圈 + 对准目标部门
+  // 扇区i中心初始角度：i * segAngle - 90（顶部为-90度）
+  // 旋转后要让目标部门对准顶部（-90度），则最终角度%360应等于 (360 - targetIndex * segAngle) % 360
+  const spins = 5 + Math.floor(Math.random() * 3);
+  const targetMod = (360 - targetIndex * segAngle) % 360;
+  const currentMod = currentAngle % 360;
+  let delta = targetMod - currentMod;
+  if (delta < 0) delta += 360;
+  const rotateAmount = spins * 360 + delta;
+  
+  currentAngle += rotateAmount;
+  canvas.style.transform = `rotate(${currentAngle}deg)`;
+  
+  setTimeout(() => {
+    isSpinning = false;
+    spinBtn.disabled = false;
+    currentDept = departments[targetIndex];
+    showModal(currentDept);
+  }, 4600);
+}
+
+// 显示弹窗
+function showModal(dept) {
+  deptIcon.textContent = dept.icon;
+  deptName.textContent = dept.name;
+  deptDesc.textContent = dept.desc;
+  
+  modalHeader.style.background = dept.color;
+  document.documentElement.style.setProperty('--dept-color', dept.color);
+  document.documentElement.style.setProperty('--dept-bg', dept.bgColor);
+  
+  // 重置状态
+  questionText.textContent = '你想加入我们吗？';
+  questionText.style.display = 'block';
+  detailTabs.style.display = 'none';
+  tabContent.style.display = 'none';
+  mainActions.style.display = 'flex';
+  backBtn.style.display = 'none';
+  
+  // 重置tab
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  
+  modal.classList.add('show');
+}
+
+// 关闭弹窗
+function closeModal() {
+  modal.classList.remove('show');
+}
+
+// 显示详情
+function showDetail() {
+  questionText.style.display = 'none';
+  detailTabs.style.display = 'flex';
+  tabContent.style.display = 'block';
+  mainActions.style.display = 'none';
+  backBtn.style.display = 'block';
+  
+  // 默认选中第一个tab
+  const firstTab = document.querySelector('.tab-btn');
+  switchTab('do');
+}
+
+// 切换tab
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
+  
+  let content = '';
+  if (tab === 'do') {
+    content = '<ul>' + currentDept.do.map(item => `<li>${item}</li>`).join('') + '</ul>';
+  } else if (tab === 'gain') {
+    content = '<ul>' + currentDept.gain.map(item => `<li>${item}</li>`).join('') + '</ul>';
+  } else if (tab === 'need') {
+    content = '<ul>' + currentDept.need.map(item => `<li>${item}</li>`).join('') + '</ul>';
+  }
+  tabContent.innerHTML = content;
+}
+
+// 页面切换
+function showWheel() {
+  document.getElementById('introPage').classList.add('hide');
+  document.getElementById('wheelPage').classList.remove('hide');
+  // 页面切换后重绘转盘（确保canvas尺寸正确）
+  setTimeout(drawWheel, 100);
+  // 隐藏精彩瞬间按钮，停止计时
+  hideMomentBtn();
+  clearTimeout(momentTimer);
+}
+
+// 事件绑定
+document.getElementById('startBtn').addEventListener('click', showWheel);
+spinBtn.addEventListener('click', spin);
+noBtn.addEventListener('click', closeModal);
+yesBtn.addEventListener('click', showDetail);
+backBtn.addEventListener('click', closeModal);
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+// 点击遮罩关闭
+modal.addEventListener('click', (e) => {
+  if (e.target === modal) closeModal();
+});
+
+// ========== 精彩瞬间功能 ==========
+let momentTimer = null;
+let autoScrollTimer = null;
+let isPhotosPageOpen = false;
+let hasSeenPhotos = false; // 是否已经看过精彩瞬间
+
+// 15秒后显示精彩瞬间按钮
+function startMomentTimer() {
+  clearTimeout(momentTimer);
+  momentTimer = setTimeout(() => {
+    if (!isPhotosPageOpen && !hasSeenPhotos) {
+      document.getElementById('momentBtn').classList.add('show');
+    }
+  }, 3000); // 3秒
+}
+
+// 隐藏精彩瞬间按钮
+function hideMomentBtn() {
+  document.getElementById('momentBtn').classList.remove('show');
+}
+
+// 打开照片页面
+function openPhotosPage() {
+  isPhotosPageOpen = true;
+  hideMomentBtn();
+  clearTimeout(momentTimer);
+  
+  document.getElementById('photosPage').style.display = 'flex';
+  
+  // 重置滚动位置
+  const container = document.getElementById('photosContainer');
+  container.scrollTop = 0;
+  
+  // 开始自动滚动
+  startAutoScroll();
+}
+
+// 关闭照片页面
+function closePhotosPage() {
+  isPhotosPageOpen = false;
+  hasSeenPhotos = true; // 标记为已看过
+  document.getElementById('photosPage').style.display = 'none';
+  
+  // 停止自动滚动
+  stopAutoScroll();
+  
+  // 把精彩瞬间按钮移到左下角
+  const momentBtn = document.getElementById('momentBtn');
+  momentBtn.classList.remove('show');
+  setTimeout(() => {
+    momentBtn.classList.add('bottom-left');
+    momentBtn.classList.add('show');
+  }, 300);
+  
+  // 给底部按钮加上动画
+  document.querySelector('.start-btn').classList.add('pulse-animation');
+}
+
+// 自动滚动
+function startAutoScroll() {
+  stopAutoScroll();
+  
+  const container = document.getElementById('photosContainer');
+  const scrollBar = document.getElementById('scrollBar');
+  const scrollSpeed = 3.5; // 每次滚动像素数，约每张照片1.2秒
+  
+  // 延迟一点开始，让页面先渲染
+  setTimeout(() => {
+    autoScrollTimer = setInterval(() => {
+      if (!isPhotosPageOpen) {
+        stopAutoScroll();
+        return;
+      }
+      
+      container.scrollTop += scrollSpeed;
+      
+      // 更新进度条
+      const maxScroll = container.scrollHeight - container.clientHeight;
+      if (maxScroll > 0) {
+        const scrollPercent = (container.scrollTop / maxScroll) * 100;
+        scrollBar.style.width = Math.min(scrollPercent, 100) + '%';
+      }
+      
+      // 到底了就停止
+      if (container.scrollTop >= maxScroll - 1) {
+        stopAutoScroll();
+      }
+    }, 30); // 每30ms滚动一次，约33fps
+  }, 500);
+}
+
+// 停止自动滚动
+function stopAutoScroll() {
+  if (autoScrollTimer) {
+    clearInterval(autoScrollTimer);
+    autoScrollTimer = null;
+  }
+}
+
+// 事件绑定
+document.getElementById('momentBtn').addEventListener('click', openPhotosPage);
+document.getElementById('photosBack').addEventListener('click', closePhotosPage);
+document.getElementById('photosBackBtn').addEventListener('click', closePhotosPage);
+
+// 用户手动滚动时暂停自动滚动一会儿
+let userScrollPause = false;
+document.getElementById('photosContainer').addEventListener('touchstart', () => {
+  userScrollPause = true;
+  stopAutoScroll();
+});
+document.getElementById('photosContainer').addEventListener('touchend', () => {
+  userScrollPause = false;
+  setTimeout(() => {
+    if (isPhotosPageOpen && !userScrollPause) {
+      startAutoScroll();
+    }
+  }, 1000);
+});
+
+// 页面加载后开始计时
+window.addEventListener('load', () => {
+  startMomentTimer();
+});
+
+// 如果已经加载完了，直接开始
+if (document.readyState === 'complete') {
+  startMomentTimer();
+}
+</script>
+</body>
+</html>
